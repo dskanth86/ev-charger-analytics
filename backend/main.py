@@ -13,8 +13,8 @@ from input_config import prompt_user_inputs
 from scoring.demand import estimate_demand_score
 from scoring.competition import compute_competition_score, estimate_sessions_per_day
 
-# ✅ ROI MODULE
-from roi.roi import roi_model
+# ✅ ROI MODULE (base + 5-year forecast)
+from roi.roi import roi_model, forecast_roi_5yr
 
 # ✅ MAP OUTPUT (B)
 from maps.map_html import generate_map_html
@@ -125,7 +125,7 @@ def main():
     kwh_per_session = user_inputs["kwh_per_session"]
     install_cost = user_inputs["install_cost"]
 
-    # ✅ ROI (FINANCIAL ENGINE)
+    # ✅ ROI (BASE FINANCIAL ENGINE)
     roi_results = roi_model(
         sessions_low,
         sessions_high,
@@ -148,6 +148,22 @@ def main():
     print(f"Monthly Profit: ${monthly_profit:,.2f}")
     print(f"Payback Period: {payback:.2f} years")
     print(f"Final Verdict: {verdict}")
+
+    # ✅ 5-YEAR FORECAST
+    forecast_5yr = forecast_roi_5yr(
+        base_daily_sessions=roi_results["avg_sessions_per_day"],
+        price_per_kwh=price_per_kwh,
+        electricity_cost=electricity_cost,
+        kwh_per_session=kwh_per_session,
+        install_cost=install_cost,
+    )
+
+    print("\n5-Year Income Forecast (Annual / Cumulative):")
+    for row in forecast_5yr:
+        print(
+            f"  Year {row['year']}: "
+            f"${row['annual_profit']:,.0f} / ${row['cumulative_profit']:,.0f}"
+        )
 
     # ✅ MAP OUTPUT (B)
     map_path = generate_map_html(address, lat, lon)
@@ -177,6 +193,9 @@ def main():
 
         # ✅ FLOOD DATA FOR REPORT
         "flood": flood_data,
+
+        # ✅ 5-YEAR FORECAST FOR REPORT
+        "forecast_5yr": forecast_5yr,
     }
 
     pdf_path = generate_pdf_report("reports", pdf_context)
