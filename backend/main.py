@@ -20,6 +20,9 @@ from maps.map_html import generate_map_html
 # ✅ PDF REPORT (C)
 from reports.pdf_report import generate_pdf_report
 
+# ✅ ZONING + PARKING (E)
+from zoning_parking import analyze_parking, analyze_zoning
+
 
 # -----------------------------
 # CONFIG
@@ -90,6 +93,12 @@ def main():
     print(f"Nearby Chargers (1 mile): {charger_count}")
     print(f"Competition Score: {competition_score}/100")
 
+    # ✅ PARKING & ZONING (E)
+    parking_info = analyze_parking(lat, lon)
+    zoning_info = analyze_zoning(lat, lon)
+    print(f"Parking Score: {parking_info['parking_score']}/100 (count={parking_info['parking_count']})")
+    print(f"Zoning: {zoning_info['zoning_label']}")
+
     # ✅ USAGE ESTIMATE
     sessions_low, sessions_high = estimate_sessions_per_day(
         demand_score,
@@ -152,6 +161,9 @@ def main():
         "monthly_profit": monthly_profit,
         "payback_years": payback,
         "verdict": verdict,
+        "parking_score": parking_info["parking_score"],
+        "parking_count": parking_info["parking_count"],
+        "zoning_label": zoning_info["zoning_label"],
     }
 
     pdf_path = generate_pdf_report("reports", pdf_context)

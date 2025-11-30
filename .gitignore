@@ -1,5 +1,10 @@
-__pycache__/
-.env
-*.db
-*.log
+# Virtual environments
 venv/
+.env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Generated outputs
+reports/
