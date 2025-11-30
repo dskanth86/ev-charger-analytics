@@ -1,0 +1,73 @@
+# backend/reports/pdf_report.py
+
+import os
+from pathlib import Path
+from reportlab.lib.pagesizes import LETTER
+from reportlab.pdfgen import canvas
+
+
+def generate_pdf_report(output_dir: str, context: dict) -> str:
+    """
+    Generates a one-page investor-ready PDF feasibility report.
+    """
+
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    output_path = os.path.join(output_dir, "ev_site_report.pdf")
+
+    c = canvas.Canvas(output_path, pagesize=LETTER)
+    width, height = LETTER
+
+    text = c.beginText(40, height - 50)
+
+    # ---- HEADER ----
+    text.setFont("Helvetica-Bold", 16)
+    text.textLine("EV Charger Site Feasibility Report")
+    text.moveCursor(0, 20)
+
+    # ---- BASIC INFO ----
+    text.setFont("Helvetica", 11)
+    text.textLine(f"Address: {context['address']}")
+    text.textLine(f"Coordinates: {context['lat']:.5f}, {context['lon']:.5f}")
+    text.moveCursor(0, 12)
+
+    # ---- SCORES ----
+    text.setFont("Helvetica-Bold", 12)
+    text.textLine("Site Metrics")
+    text.setFont("Helvetica", 11)
+
+    text.textLine(f"Demand Score: {context['demand_score']}/100")
+    text.textLine(f"Competition Score: {context['competition_score']}/100")
+    text.textLine(f"Estimated Sessions/Day: {context['sessions_low']} – {context['sessions_high']}")
+    text.moveCursor(0, 12)
+
+    # ---- CHARGER CONFIG ----
+    text.setFont("Helvetica-Bold", 12)
+    text.textLine("Charger Configuration")
+    text.setFont("Helvetica", 11)
+
+    text.textLine(f"Charger Type: {context['charger_type']}")
+    text.textLine(f"Price per kWh: ${context['price_per_kwh']:.2f}")
+    text.textLine(f"Electricity Cost per kWh: ${context['electricity_cost']:.2f}")
+    text.textLine(f"kWh per Session: {context['kwh_per_session']}")
+    text.textLine(f"Install Cost: ${context['install_cost']:,.0f}")
+    text.moveCursor(0, 12)
+
+    # ---- FINANCIALS ----
+    text.setFont("Helvetica-Bold", 12)
+    text.textLine("Financial Performance")
+    text.setFont("Helvetica", 11)
+
+    text.textLine(f"Avg Sessions/Day: {context['avg_sessions_per_day']:.1f}")
+    text.textLine(f"Monthly Profit: ${context['monthly_profit']:,.2f}")
+    text.textLine(f"Payback Period: {context['payback_years']:.2f} years")
+    text.moveCursor(0, 12)
+
+    # ---- VERDICT ----
+    text.setFont("Helvetica-Bold", 13)
+    text.textLine(f"Final Verdict: {context['verdict']}")
+
+    c.drawText(text)
+    c.showPage()
+    c.save()
+
+    return output_path
