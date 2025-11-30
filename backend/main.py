@@ -2,7 +2,9 @@
 
 import sys
 import requests
-from math import radians, sin, cos, sqrt, atan2
+
+# ✅ FLOOD RISK (FEMA)
+from data_sources.flood_fema import get_flood_risk
 
 # ✅ USER CONFIG (D)
 from input_config import prompt_user_inputs
@@ -80,6 +82,14 @@ def main():
     # ✅ GEO
     lat, lon = geocode_address(address)
     print(f"Coordinates: {lat:.5f}, {lon:.5f}")
+
+    # ✅ FLOOD RISK (LIVE FEMA)
+    flood_data = get_flood_risk(lat, lon)
+
+    print("\nFlood Risk:")
+    print(f"  FEMA Zone: {flood_data['zone']}")
+    print(f"  100-Year Floodplain: {flood_data['in_100yr']}")
+    print(f"  Insurance Required: {flood_data['insurance_required']}")
 
     # ✅ DEMAND (A)
     demand_score = estimate_demand_score(lat, lon)
@@ -164,6 +174,9 @@ def main():
         "parking_score": parking_info["parking_score"],
         "parking_count": parking_info["parking_count"],
         "zoning_label": zoning_info["zoning_label"],
+
+        # ✅ FLOOD DATA FOR REPORT
+        "flood": flood_data,
     }
 
     pdf_path = generate_pdf_report("reports", pdf_context)
