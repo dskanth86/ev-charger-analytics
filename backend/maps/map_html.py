@@ -17,11 +17,60 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <style>
         body {{ margin: 0; padding: 0; }}
         #map {{ height: 100vh; width: 100%; }}
+
+        /* ✅ Flood Risk Legend Styling */
+        .flood-legend {{
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            background-color: white;
+            padding: 10px 14px;
+            border: 2px solid black;
+            border-radius: 6px;
+            font-size: 12px;
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+        }}
+
+        .legend-title {{
+            font-weight: bold;
+            margin-bottom: 6px;
+            text-align: center;
+        }}
+
+        .legend-item {{
+            margin: 3px 0;
+        }}
+
+        .legend-box {{
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }}
     </style>
 </head>
 <body>
 
 <div id="map"></div>
+
+<!-- ✅ Flood Risk Legend -->
+<div class="flood-legend">
+    <div class="legend-title">Flood Risk Legend</div>
+    <div class="legend-item">
+        <span class="legend-box" style="background:#3498db;"></span>
+        Zone X — Minimal Risk
+    </div>
+    <div class="legend-item">
+        <span class="legend-box" style="background:#f1c40f;"></span>
+        Zone AE — 100-Year Floodplain
+    </div>
+    <div class="legend-item">
+        <span class="legend-box" style="background:#e74c3c;"></span>
+        Zone VE — Coastal High Risk
+    </div>
+</div>
 
 <script>
     var map = L.map('map').setView([{lat}, {lon}], 14);
@@ -48,7 +97,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 def generate_map_html(address, lat, lon, radius_m=1609, output_dir="reports"):
     """
-    Generates an interactive Leaflet HTML map for the site.
+    Generates an interactive Leaflet HTML map for the site,
+    including a flood risk legend.
     """
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
