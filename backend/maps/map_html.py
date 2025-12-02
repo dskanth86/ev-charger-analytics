@@ -80,6 +80,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }}).addTo(map);
 
     var floodZone = "{flood_zone}";
+    var poiScore = {poi_score};
 
     var zoneColor = "green";
     if (floodZone === "AE" || floodZone === "A") {{
@@ -95,7 +96,27 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         fillOpacity: 0.9
     }}).addTo(map);
 
-    marker.bindPopup("<b>EV Charger Site</b><br>{address}<br>Flood Zone: " + floodZone).openPopup();
+    // POI density indicator (ring around the main marker)
+    var poiColor = "gray";
+    if (!isNaN(poiScore)) {{
+        if (poiScore > 70) {{
+            poiColor = "green";
+        }} else if (poiScore >= 40) {{
+            poiColor = "orange";
+        }} else {{
+            poiColor = "red";
+        }}
+    }}
+
+    var poiCircle = L.circle([{lat}, {lon}], {{
+        radius: {radius_m} / 2,
+        color: poiColor,
+        fillColor: poiColor,
+        fillOpacity: 0.15,
+        weight: 3
+    }}).addTo(map);
+
+    marker.bindPopup("<b>EV Charger Site</b><br>{address}<br>Flood Zone: " + floodZone + "<br>POI Score: " + poiScore + "/100").openPopup();
 </script>
 
 <div style="
@@ -119,10 +140,13 @@ z-index: 999;
 """
 
 
-def generate_map_html(address, lat, lon, flood_zone=None, radius_m=1609, output_dir="reports"):
-    """
-    Generates an interactive Leaflet HTML map for the site,
-    including a flood risk legend.
+def generate_map_html(address, lat, lon, flood_zone=None, poi_score=50.0, radius_m=1609, output_dir="reports"):
+    """Generate an interactive Leaflet map for the site.
+
+    Includes:
+    - A flood-risk-colored marker at the site
+    - A surrounding ring colored by POI density tier (green/orange/red)
+    - A static flood risk legend overlay.
     """
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -132,7 +156,8 @@ def generate_map_html(address, lat, lon, flood_zone=None, radius_m=1609, output_
         lat=lat,
         lon=lon,
         radius_m=radius_m,
-        flood_zone=flood_zone or "X"
+        flood_zone=flood_zone or "X",
+        poi_score=poi_score,
     )
 
     output_path = os.path.join(output_dir, "site_map.html")

@@ -10,7 +10,8 @@ def compute_utilization_index(
     competition_score: float,
     parking_score: float,
     traffic_score: float = 50.0,
-    ev_share_score: float = 50.0
+    ev_share_score: float = 50.0,
+    poi_score: float = 50.0,
 ) -> float:
     """
     Calculate the utilization index (0-100) based on weighted factors.
@@ -21,6 +22,7 @@ def compute_utilization_index(
         parking_score: Parking score (0-100)
         traffic_score: Traffic score (0-100), defaults to 50
         ev_share_score: EV market share score (0-100), defaults to 50
+        poi_score: POI density score (0-100), defaults to 50
         
     Returns:
         float: Utilization index from 0 to 100
@@ -28,13 +30,14 @@ def compute_utilization_index(
     # Invert competition score (100 - score)
     inverse_competition = 100.0 - competition_score
     
-    # Calculate weighted sum
+    # Calculate weighted sum (weights sum to 1.0 including POI layer)
     utilization = (
-        demand_score * 0.35 +
-        inverse_competition * 0.30 +
-        parking_score * 0.20 +
+        demand_score * 0.30 +
+        inverse_competition * 0.25 +
+        parking_score * 0.15 +
         traffic_score * 0.10 +
-        ev_share_score * 0.05
+        ev_share_score * 0.05 +
+        poi_score * 0.15
     )
     
     # Ensure the result is within 0-100 range
@@ -67,7 +70,8 @@ def estimate_sessions_range(
     parking_score: float,
     charger_type: str,
     traffic_score: float = 50.0,
-    ev_share_score: float = 50.0
+    ev_share_score: float = 50.0,
+    poi_score: float = 50.0,
 ) -> tuple[int, int, float]:
     """
     Estimate the range of charging sessions per day.
@@ -89,7 +93,8 @@ def estimate_sessions_range(
         competition_score=competition_score,
         parking_score=parking_score,
         traffic_score=traffic_score,
-        ev_share_score=ev_share_score
+        ev_share_score=ev_share_score,
+        poi_score=poi_score,
     )
     
     # Get base session range

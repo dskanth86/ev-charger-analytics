@@ -6,6 +6,7 @@ import requests
 # ✅ FLOOD RISK (FEMA)
 from data_sources.flood_fema import get_flood_risk
 from data_sources.traffic_aadt import get_traffic_score
+from data_sources.poi_osm import get_poi_score
 from data_sources.ev_adoption import get_ev_share_score
 
 # ✅ USER CONFIG (D)
@@ -113,6 +114,14 @@ def main():
     print(f"Nearby Chargers (1 mile): {charger_count}")
     print(f"Competition Score: {competition_score}/100")
 
+    # ✅ POI FOOTFALL LAYER
+    poi_result = get_poi_score(lat, lon)
+    poi_score = poi_result.get("poi_score", 50.0)
+    print("POI Layer:")
+    print(f"  POI Count: {poi_result.get('poi_count')}")
+    print(f"  POI Density (per km^2): {poi_result.get('poi_density')}")
+    print(f"  POI Score: {poi_score}/100")
+
     # ✅ PARKING & ZONING (E)
     parking_info = analyze_parking(lat, lon)
     zoning_info = analyze_zoning(lat, lon)
@@ -135,6 +144,7 @@ def main():
         charger_type=charger_type,
         traffic_score=traffic_score,
         ev_share_score=ev_share_score,
+        poi_score=poi_score,
     )
     print(f"Utilization Index: {utilization:.1f}")
     print(f"Estimated Sessions/Day: {sessions_low} – {sessions_high}")
@@ -193,7 +203,13 @@ def main():
     print(f"ROI Curve Generated: {roi_curve_path}")
 
     # MAP OUTPUT (B)
-    map_path = generate_map_html(address, lat, lon, flood_zone=flood_data["zone"])
+    map_path = generate_map_html(
+        address,
+        lat,
+        lon,
+        flood_zone=flood_data["zone"],
+        poi_score=poi_score,
+    )
     print(f"\nInteractive Map Generated: {map_path}")
 
     # PDF INVESTOR REPORT (C)
@@ -205,6 +221,7 @@ def main():
         "competition_score": competition_score,
         "traffic_score": traffic_score,
         "ev_share_score": ev_share_score,
+        "poi_score": poi_score,
         "sessions_low": sessions_low,
         "sessions_high": sessions_high,
         "utilization_index": utilization,

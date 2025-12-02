@@ -59,6 +59,7 @@ def generate_pdf_report(output_dir: str, context: dict) -> str:
     draw_gauge(c, 40, height - 130, context["ev_share_score"], "EV Adoption")
     draw_gauge(c, 40, height - 150, context["demand_score"], "Demand")
     draw_gauge(c, 40, height - 170, context["parking_score"], "Parking")
+    draw_gauge(c, 40, height - 190, context["poi_score"], "POI Density")
 
     # ---------------- FLOOD RISK ----------------
     flood = context.get("flood", {})
