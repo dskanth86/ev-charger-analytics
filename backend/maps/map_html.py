@@ -79,23 +79,47 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         maxZoom: 19
     }}).addTo(map);
 
-    var marker = L.marker([{lat}, {lon}]).addTo(map);
-    marker.bindPopup("<b>EV Charger Site</b><br>{address}").openPopup();
+    var floodZone = "{flood_zone}";
 
-    var circle = L.circle([{lat}, {lon}], {{
-        radius: {radius_m},
-        color: 'blue',
-        fillColor: '#3498db',
-        fillOpacity: 0.15
+    var zoneColor = "green";
+    if (floodZone === "AE" || floodZone === "A") {{
+        zoneColor = "orange";
+    }} else if (floodZone === "VE" || floodZone === "V") {{
+        zoneColor = "red";
+    }}
+
+    var marker = L.circleMarker([{lat}, {lon}], {{
+        radius: 10,
+        color: zoneColor,
+        fillColor: zoneColor,
+        fillOpacity: 0.9
     }}).addTo(map);
+
+    marker.bindPopup("<b>EV Charger Site</b><br>{address}<br>Flood Zone: " + floodZone).openPopup();
 </script>
+
+<div style="
+position: absolute;
+bottom: 20px;
+right: 20px;
+background: white;
+padding: 10px;
+border: 1px solid #999;
+font-size: 12px;
+z-index: 999;
+">
+<b>Flood Risk Legend</b><br>
+<span style="color: green;">●</span> Low Risk (Zone X)<br>
+<span style="color: orange;">●</span> Moderate Risk (Zone AE)<br>
+<span style="color: red;">●</span> High Risk (Zone VE)
+</div>
 
 </body>
 </html>
 """
 
 
-def generate_map_html(address, lat, lon, radius_m=1609, output_dir="reports"):
+def generate_map_html(address, lat, lon, flood_zone=None, radius_m=1609, output_dir="reports"):
     """
     Generates an interactive Leaflet HTML map for the site,
     including a flood risk legend.
@@ -107,7 +131,8 @@ def generate_map_html(address, lat, lon, radius_m=1609, output_dir="reports"):
         address=address.replace('"', "'"),
         lat=lat,
         lon=lon,
-        radius_m=radius_m
+        radius_m=radius_m,
+        flood_zone=flood_zone or "X"
     )
 
     output_path = os.path.join(output_dir, "site_map.html")

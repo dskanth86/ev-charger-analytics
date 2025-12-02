@@ -24,6 +24,7 @@ from maps.map_html import generate_map_html
 
 # ✅ PDF REPORT (C)
 from reports.pdf_report import generate_pdf_report
+from reports.roi_curve import generate_roi_curve
 
 # ✅ ZONING + PARKING (E)
 from zoning_parking import analyze_parking, analyze_zoning
@@ -187,11 +188,15 @@ def main():
             f"${row['annual_profit']:,.0f} / ${row['cumulative_profit']:,.0f}"
         )
 
-    # ✅ MAP OUTPUT (B)
-    map_path = generate_map_html(address, lat, lon)
+    roi_curve_path = generate_roi_curve(install_cost, forecast)
+    roi_results["chart_path"] = roi_curve_path
+    print(f"ROI Curve Generated: {roi_curve_path}")
+
+    # MAP OUTPUT (B)
+    map_path = generate_map_html(address, lat, lon, flood_zone=flood_data["zone"])
     print(f"\nInteractive Map Generated: {map_path}")
 
-    # ✅ PDF INVESTOR REPORT (C)
+    # PDF INVESTOR REPORT (C)
     pdf_context = {
         "address": address,
         "lat": lat,
@@ -217,12 +222,13 @@ def main():
         "parking_count": parking_info["parking_count"],
         "zoning_label": zoning_info["zoning_label"],
 
-        # ✅ FLOOD DATA FOR REPORT
+        # FLOOD DATA FOR REPORT
         "flood": flood_data,
 
-        # ✅ 5-YEAR FORECAST FOR REPORT
+        # 5-YEAR FORECAST FOR REPORT
         "forecast_5yr": forecast_5yr,
         "forecast": forecast,
+        "roi_img_path": roi_results.get("chart_path"),
     }
 
     pdf_path = generate_pdf_report("reports", pdf_context)

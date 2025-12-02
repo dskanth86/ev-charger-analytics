@@ -4,6 +4,32 @@ from reportlab.lib.pagesizes import LETTER
 from reportlab.pdfgen import canvas
 
 
+def draw_gauge(c, x, y, score, label):
+    """
+    Draws a horizontal gauge bar (0–100%) with a label.
+    """
+    bar_width = 200
+    bar_height = 12
+
+    # Background
+    c.setFillColorRGB(0.9, 0.9, 0.9)
+    c.rect(x, y, bar_width, bar_height, fill=True, stroke=False)
+
+    # Foreground proportional fill
+    pct = max(0, min(100, score)) / 100
+    c.setFillColorRGB(0.2, 0.6, 1.0)  # blue fill
+    c.rect(x, y, bar_width * pct, bar_height, fill=True, stroke=False)
+
+    # Border
+    c.setStrokeColorRGB(0, 0, 0)
+    c.rect(x, y, bar_width, bar_height, fill=False, stroke=True)
+
+    # Label text
+    c.setFillColorRGB(0, 0, 0)
+    c.setFont("Helvetica", 10)
+    c.drawString(x + bar_width + 10, y + 1, f"{label}: {score}/100")
+
+
 def generate_pdf_report(output_dir: str, context: dict) -> str:
     """
     Generates a one-page investor-ready PDF feasibility report.
@@ -15,7 +41,7 @@ def generate_pdf_report(output_dir: str, context: dict) -> str:
     c = canvas.Canvas(output_path, pagesize=LETTER)
     width, height = LETTER
 
-    text = c.beginText(40, height - 50)
+    text = c.beginText(40, height - 230)
 
     # ---------------- HEADER ----------------
     text.setFont("Helvetica-Bold", 16)
@@ -27,6 +53,12 @@ def generate_pdf_report(output_dir: str, context: dict) -> str:
     text.textLine(f"Address: {context['address']}")
     text.textLine(f"Coordinates: {context['lat']:.5f}, {context['lon']:.5f}")
     text.moveCursor(0, 12)
+
+    # ---- SCORE GAUGES ----
+    draw_gauge(c, 40, height - 110, context["traffic_score"], "Traffic")
+    draw_gauge(c, 40, height - 130, context["ev_share_score"], "EV Adoption")
+    draw_gauge(c, 40, height - 150, context["demand_score"], "Demand")
+    draw_gauge(c, 40, height - 170, context["parking_score"], "Parking")
 
     # ---------------- FLOOD RISK ----------------
     flood = context.get("flood", {})
@@ -89,7 +121,30 @@ def generate_pdf_report(output_dir: str, context: dict) -> str:
     text.textLine(f"Final Verdict: {context['verdict']}")
 
     c.drawText(text)
-    c.showPage()
+
+    # --- ROI PAGE ---
+    roi_img_path = context.get("roi_img_path")
+    if roi_img_path and os.path.exists(roi_img_path):
+
+        c.showPage()  # start Page 2
+
+        # Title
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(40, height - 50, "5-Year ROI Projection")
+
+        # Draw ROI chart
+        c.drawImage(
+            roi_img_path,
+            40,               # x
+            height - 400,     # y
+            width=520,
+            height=330,
+            preserveAspectRatio=True,
+            mask='auto'
+        )
+
+        c.showPage()
+
     c.save()
 
     return output_path
