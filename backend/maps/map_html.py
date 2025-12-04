@@ -81,6 +81,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
     var floodZone = "{flood_zone}";
     var poiScore = {poi_score};
+    var utilizationIndex = {utilization_index};
 
     var zoneColor = "green";
     if (floodZone === "AE" || floodZone === "A") {{
@@ -116,6 +117,26 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         weight: 3
     }}).addTo(map);
 
+    // ARC-LM utilization ring (outer ring)
+    var utilColor = "gray";
+    if (!isNaN(utilizationIndex)) {{
+        if (utilizationIndex < 40) {{
+            utilColor = "red";
+        }} else if (utilizationIndex <= 70) {{
+            utilColor = "orange";
+        }} else {{
+            utilColor = "green";
+        }}
+    }}
+
+    var utilCircle = L.circle([{lat}, {lon}], {{
+        radius: {radius_m},
+        color: utilColor,
+        fillColor: utilColor,
+        fillOpacity: 0.08,
+        weight: 2
+    }}).addTo(map);
+
     marker.bindPopup("<b>EV Charger Site</b><br>{address}<br>Flood Zone: " + floodZone + "<br>POI Score: " + poiScore + "/100").openPopup();
 </script>
 
@@ -140,7 +161,7 @@ z-index: 999;
 """
 
 
-def generate_map_html(address, lat, lon, flood_zone=None, poi_score=50.0, radius_m=1609, output_dir="reports"):
+def generate_map_html(address, lat, lon, flood_zone=None, poi_score=50.0, radius_m=1609, output_dir="reports", utilization_index=None):
     """Generate an interactive Leaflet map for the site.
 
     Includes:
@@ -158,6 +179,7 @@ def generate_map_html(address, lat, lon, flood_zone=None, poi_score=50.0, radius
         radius_m=radius_m,
         flood_zone=flood_zone or "X",
         poi_score=poi_score,
+        utilization_index=utilization_index if utilization_index is not None else 'NaN',
     )
 
     output_path = os.path.join(output_dir, "site_map.html")

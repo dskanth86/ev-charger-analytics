@@ -1,0 +1,97 @@
+{
+  "metrics": {
+    "demand_score": {
+      "count": 318,
+      "mean": 49.22106918238994,
+      "stdev": 3.4778675045006526,
+      "min": 41.0,
+      "max": 56.0
+    },
+    "traffic_score": {
+      "count": 318,
+      "mean": 50.0,
+      "stdev": 0.0,
+      "min": 50.0,
+      "max": 50.0
+    },
+    "ev_share_score": {
+      "count": 318,
+      "mean": 50.0,
+      "stdev": 0.0,
+      "min": 50.0,
+      "max": 50.0
+    },
+    "poi_score": {
+      "count": 318,
+      "mean": 23.388993710691825,
+      "stdev": 22.768268736369325,
+      "min": 5.0,
+      "max": 100.0
+    },
+    "competition_score": {
+      "count": 318,
+      "mean": 20.660377358490567,
+      "stdev": 6.766854279407282,
+      "min": 20.0,
+      "max": 90.0
+    },
+    "parking_score": {
+      "count": 318,
+      "mean": 53.64779874213836,
+      "stdev": 29.80378988284676,
+      "min": 20.0,
+      "max": 85.0
+    },
+    "utilization_index": {
+      "count": 318,
+      "mean": 46.19729716981132,
+      "stdev": 5.347628311275759,
+      "min": 32.28750000000001,
+      "max": 57.968999999999994
+    },
+    "sessions_low": {
+      "count": 318,
+      "mean": 5.8584905660377355,
+      "stdev": 0.6360058034220065,
+      "min": 3.0,
+      "max": 6.0
+    },
+    "sessions_high": {
+      "count": 318,
+      "mean": 9.81132075471698,
+      "stdev": 0.8480077378960087,
+      "min": 6.0,
+      "max": 10.0
+    },
+    "avg_sessions_per_day": {
+      "count": 318,
+      "mean": 7.834905660377358,
+      "stdev": 0.7420067706590077,
+      "min": 4.5,
+      "max": 8.0
+    },
+    "monthly_profit": {
+      "count": 0
+    },
+    "payback_years": {
+      "count": 0
+    }
+  },
+  "counts_by_region": {
+    "urban": 141,
+    "suburban": 79,
+    "rural": 98
+  },
+  "counts_by_ev_band": {
+    "high": 121,
+    "medium": 144,
+    "low": 53
+  },
+  "correlations": {
+    "corr_demand_score_vs_sessions_high": 0.30416359286595546,
+    "corr_traffic_score_vs_sessions_high": null,
+    "corr_ev_share_score_vs_sessions_high": null,
+    "corr_poi_score_vs_sessions_high": 0.17859421423106178,
+    "corr_utilization_index_vs_avg_sessions_per_day": 0.30580900751249834
+  }
+}

@@ -1,68 +1,13 @@
 """
 Session estimation module for EV charger analytics.
 
-This module provides functions to estimate charging session ranges
-based on various factors like demand, competition, and parking.
+This module now delegates to the ARC-LM deterministic model as the
+single source of truth for utilization and session ranges.
 """
 
-def compute_utilization_index(
-    demand_score: float,
-    competition_score: float,
-    parking_score: float,
-    traffic_score: float = 50.0,
-    ev_share_score: float = 50.0,
-    poi_score: float = 50.0,
-) -> float:
-    """
-    Calculate the utilization index (0-100) based on weighted factors.
-    
-    Args:
-        demand_score: Demand score (0-100)
-        competition_score: Competition score (0-100, will be inverted)
-        parking_score: Parking score (0-100)
-        traffic_score: Traffic score (0-100), defaults to 50
-        ev_share_score: EV market share score (0-100), defaults to 50
-        poi_score: POI density score (0-100), defaults to 50
-        
-    Returns:
-        float: Utilization index from 0 to 100
-    """
-    # Invert competition score (100 - score)
-    inverse_competition = 100.0 - competition_score
-    
-    # Calculate weighted sum (weights sum to 1.0 including POI layer)
-    utilization = (
-        demand_score * 0.30 +
-        inverse_competition * 0.25 +
-        parking_score * 0.15 +
-        traffic_score * 0.10 +
-        ev_share_score * 0.05 +
-        poi_score * 0.15
-    )
-    
-    # Ensure the result is within 0-100 range
-    return max(0.0, min(100.0, utilization))
+from typing import Tuple
 
-def get_session_range(utilization: float) -> tuple[int, int]:
-    """
-    Map utilization index to session range.
-    
-    Args:
-        utilization: Utilization index (0-100)
-        
-    Returns:
-        tuple: (low, high) session range
-    """
-    if utilization < 20:
-        return (1, 3)
-    elif utilization < 40:
-        return (3, 6)
-    elif utilization < 60:
-        return (6, 10)
-    elif utilization < 80:
-        return (10, 16)
-    else:
-        return (16, 24)
+from model.arc_lm import build_feature_vector, arc_lm_predict
 
 def estimate_sessions_range(
     demand_score: float,
@@ -72,37 +17,38 @@ def estimate_sessions_range(
     traffic_score: float = 50.0,
     ev_share_score: float = 50.0,
     poi_score: float = 50.0,
-) -> tuple[int, int, float]:
+    *,
+    zoning_label: str = "",
+    parking_count: int = 0,
+    region_hint: str = "",
+) -> Tuple[int, int, float]:
+    """Estimate the range of charging sessions per day via ARC-LM.
+
+    This function preserves the original public API while forwarding the
+    computation to the ARC-LM model, which is now the single source of
+    truth for utilization and sessions.
     """
-    Estimate the range of charging sessions per day.
-    
-    Args:
-        demand_score: Demand score (0-100)
-        competition_score: Competition score (0-100)
-        parking_score: Parking score (0-100)
-        charger_type: Type of charger ('L2' or 'DCFC')
-        traffic_score: Traffic score (0-100), defaults to 50
-        ev_share_score: EV market share score (0-100), defaults to 50
-        
-    Returns:
-        tuple: (low_sessions, high_sessions, utilization_index)
-    """
-    # Calculate utilization index
-    utilization = compute_utilization_index(
-        demand_score=demand_score,
-        competition_score=competition_score,
-        parking_score=parking_score,
-        traffic_score=traffic_score,
-        ev_share_score=ev_share_score,
-        poi_score=poi_score,
+
+    context = {
+        "demand_score": demand_score,
+        "traffic_score": traffic_score,
+        "ev_share_score": ev_share_score,
+        "poi_score": poi_score,
+        "competition_score": competition_score,
+        "parking_score": parking_score,
+        "zoning_label": zoning_label,
+        "parking_count": parking_count,
+        "charger_type": charger_type,
+        "region_hint": region_hint,
+    }
+
+    # Lat/lon are not part of the legacy API, but ARC-LM only uses them
+    # as identifiers, so we safely pass zeros here.
+    features = build_feature_vector(0.0, 0.0, context)
+    result = arc_lm_predict(features)
+
+    return (
+        int(result["sessions_low"]),
+        int(result["sessions_high"]),
+        float(result["utilization_index"]),
     )
-    
-    # Get base session range
-    low, high = get_session_range(utilization)
-    
-    # Apply DCFC multiplier if applicable
-    if charger_type.upper() == 'DCFC':
-        low = int(round(low * 1.8))
-        high = int(round(high * 1.8))
-    
-    return low, high, utilization

@@ -15,7 +15,9 @@ from input_config import prompt_user_inputs
 # ✅ SCORING MODULES (A + Competition)
 from scoring.demand import estimate_demand_score
 from scoring.competition import compute_competition_score
-from scoring.sessions import estimate_sessions_range
+
+# ✅ ARC-LM MODEL
+from model.arc_lm import build_feature_vector, arc_lm_predict
 
 # ✅ ROI MODULE (base + 5-year forecast)
 from roi.roi import roi_model, forecast_roi_5yr
@@ -136,18 +138,37 @@ def main():
     kwh_per_session = user_inputs["kwh_per_session"]
     install_cost = user_inputs["install_cost"]
 
-    # ✅ USAGE ESTIMATE
-    sessions_low, sessions_high, utilization = estimate_sessions_range(
-        demand_score=demand_score,
-        competition_score=competition_score,
-        parking_score=parking_info['parking_score'],
-        charger_type=charger_type,
-        traffic_score=traffic_score,
-        ev_share_score=ev_share_score,
-        poi_score=poi_score,
-    )
-    print(f"Utilization Index: {utilization:.1f}")
-    print(f"Estimated Sessions/Day: {sessions_low} – {sessions_high}")
+    # ✅ ARC-LM FEATURE VECTOR
+    arc_context = {
+        "demand_score": demand_score,
+        "traffic_score": traffic_score,
+        "ev_share_score": ev_share_score,
+        "poi_score": poi_score,
+        "competition_score": competition_score,
+        "parking_score": parking_info["parking_score"],
+        "parking_count": parking_info["parking_count"],
+        "zoning_label": zoning_info["zoning_label"],
+        "charger_type": charger_type,
+    }
+
+    features = build_feature_vector(lat, lon, arc_context)
+    arc_result = arc_lm_predict(features)
+
+    utilization = arc_result["utilization_index"]
+    sessions_low = int(arc_result["sessions_low"])
+    sessions_high = int(arc_result["sessions_high"])
+
+    factors = arc_result.get("factor_percentages", {})
+
+    print("\nARC-LM Load Breakdown:")
+    print(f"  Base Demand: {factors.get('Base Demand', 0.0):.1f}%")
+    print(f"  Traffic Elasticity: {factors.get('Traffic Elasticity', 0.0):.1f}%")
+    print(f"  POI Attraction: {factors.get('POI Attraction', 0.0):.1f}%")
+    print(f"  Fleet EV Factor: {factors.get('Fleet EV Factor', 0.0):.1f}%")
+    print(f"  Competitor Load: {factors.get('Competitor Load', 0.0):.1f}%")
+    print(f"  Regional Multiplier: {factors.get('Regional Multiplier', 0.0):.1f}%")
+    print(f"  Final Utilization: {utilization:.1f}")
+    print(f"  Sessions/Day: {sessions_low} – {sessions_high}")
 
     # ✅ ROI (BASE FINANCIAL ENGINE)
     roi_results = roi_model(
@@ -156,7 +177,7 @@ def main():
         price_per_kwh,
         electricity_cost,
         kwh_per_session,
-        install_cost
+        install_cost,
     )
 
     monthly_profit = roi_results["monthly_profit"]
@@ -209,6 +230,7 @@ def main():
         lon,
         flood_zone=flood_data["zone"],
         poi_score=poi_score,
+        utilization_index=utilization,
     )
     print(f"\nInteractive Map Generated: {map_path}")
 
@@ -226,6 +248,7 @@ def main():
         "sessions_high": sessions_high,
         "utilization_index": utilization,
         "util_index": utilization,
+        "arc_lm_factors": factors,
         "charger_type": charger_type,
         "price_per_kwh": price_per_kwh,
         "electricity_cost": electricity_cost,
@@ -246,6 +269,7 @@ def main():
         "forecast_5yr": forecast_5yr,
         "forecast": forecast,
         "roi_img_path": roi_results.get("chart_path"),
+        "map_path": map_path,
     }
 
     pdf_path = generate_pdf_report("reports", pdf_context)
